@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Willow's Revenge</title>
+    <style>
+        :root {
+            --glass: rgba(255, 255, 255, 0.12);
+            --border: rgba(255, 255, 255, 0.2);
+            --accent: #00d4ff;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent !important;
+            font-family: 'Segoe UI', sans-serif;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* GIF Background */
+        .bg-gif {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('revenge.gif') center/cover no-repeat;
+            opacity: 0.7;
+            z-index: -2;
+        }
+
+        /* Starfield */
+        #starfield {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Layout for Buttons */
+        .button-group {
+            display: flex;
+            gap: 20px;
+            z-index: 10;
+        }
+
+        .glass-btn {
+            height: 80px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(25px);
+            border: 2px solid var(--border);
+            border-radius: 15px;
+            color: white;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+            transition: 0.3s ease;
+        }
+
+        #playBtn { width: 220px; font-size: 1.1rem; letter-spacing: 1px; }
+        #muteBtn { width: 80px; font-size: 1.5rem; }
+
+        .glass-btn:active { transform: scale(0.95); }
+        .glass-btn:hover { 
+            border-color: var(--accent); 
+            box-shadow: 0 0 20px var(--accent);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Progress Bar */
+        .controls {
+            position: absolute;
+            bottom: 60px;
+            width: 80%;
+            max-width: 600px;
+        }
+
+        #seek-bar {
+            width: 100%;
+            cursor: pointer;
+            accent-color: var(--accent);
+            filter: drop-shadow(0 0 5px var(--accent));
+        }
+
+        canvas { width: 100%; height: 100%; }
+    </style>
+</head>
+<body>
+
+    <div class="bg-gif"></div>
+    <canvas id="starfield"></canvas>
+
+    <div class="button-group">
+        <button class="glass-btn" id="playBtn">Prank on Ali</button>
+        <button class="glass-btn" id="muteBtn" title="Mute/Unmute">🔊</button>
+    </div>
+
+    <div class="controls">
+        <input type="range" id="seek-bar" value="0" step="0.1">
+    </div>
+
+    <!-- Direct Audio Loading -->
+    <audio id="audioTrack" preload="auto">
+        <source src="payback.mp3" type="audio/mpeg">
+    
+
+    <script>
+        const audio = document.getElementById('audioTrack');
+        const playBtn = document.getElementById('playBtn');
+        const muteBtn = document.getElementById('muteBtn');
+        const seekBar = document.getElementById('seek-bar');
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+
+        // Simple Toggle Play/Pause
+        playBtn.addEventListener('click', () => {
+            if (audio.paused) {
+                audio.play().then(() => {
+                    playBtn.innerText = "Playing...";
+                }).catch(error => {
+                    console.error("Playback failed:", error);
+                    alert("Please ensure payback.mp3 is in the same folder.");
+                });
+            } else {
+                audio.pause();
+                playBtn.innerText = "Paused";
+            }
+        });
+
+        // Simple Toggle Mute
+        muteBtn.addEventListener('click', () => {
+            audio.muted = !audio.muted;
+            muteBtn.innerText = audio.muted ? "🔇" : "🔊";
+            muteBtn.style.color = audio.muted ? "#ff4d4d" : "white";
+        });
+
+        // Starfield logic
+        let stars = [];
+        function initStars() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            stars = Array.from({length: 20}, () => ({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: Math.random() * 2 + 1,
+                speed: Math.random() * 1 + 0.5
+            }));
+        }
+
+        function animateStars() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+            stars.forEach(s => {
+                ctx.beginPath(); 
+                ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2); 
+                ctx.fill();
+                s.y -= s.speed;
+                if (s.y < 0) s.y = canvas.height;
+            });
+            requestAnimationFrame(animateStars);
+        }
+
+        // Progress Bar Update
+        audio.ontimeupdate = () => { 
+            if (audio.duration) {
+                seekBar.value = (audio.currentTime / audio.duration) * 100;
+            }
+        };
+
+        // Seeking
+        seekBar.oninput = () => { 
+            if (audio.duration) {
+                audio.currentTime = (seekBar.value / 100) * audio.duration;
+            }
+        };
+
+        initStars();
+        animateStars();
+        window.onresize = initStars;
+    </script>
+</body>
+</html>
